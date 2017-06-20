@@ -5,8 +5,9 @@ const Command = require('command'),
 module.exports = function NameChanger(dispatch) {
 	const command = Command(dispatch)
 	
-	let newName = null
-		enabled = true;
+	let newName = null,
+		enabled = true,
+		originalName = null;
 	
 	try {
 		newName = require('./name.json')
@@ -37,7 +38,16 @@ module.exports = function NameChanger(dispatch) {
 	
 	dispatch.hook('S_LOGIN', 2, event => {
 		if(enabled && newName) {
+			originalName = event.name;
 			event.name = newName;
+			return true;
+		}
+		return
+	});
+	
+	dispatch.hook('C_SHOW_ITEM_TOOLTIP_EX', 1, event => {
+		if(enabled && newName) {
+			event.name = originalName;
 			return true;
 		}
 		return
