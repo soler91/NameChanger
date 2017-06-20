@@ -45,6 +45,14 @@ module.exports = function NameChanger(dispatch) {
 		return
 	});
 	
+	dispatch.hook('S_CHAT', 1, event => {
+		if(event.authorName == originalName) {
+			event.authorName = newName;
+			return true;
+		}
+		return
+	});
+	
 	dispatch.hook('C_SHOW_ITEM_TOOLTIP_EX', 1, event => {
 		if(enabled && newName) {
 			event.name = originalName;
