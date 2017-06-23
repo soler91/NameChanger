@@ -99,6 +99,7 @@ module.exports = function NameChanger(dispatch) {
 		//console.log(event.name)
 			if(enabled && newNames){
 				event.name = newNames;
+				newNames = '';
 				return true;
 			}
 		return
