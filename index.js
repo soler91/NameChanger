@@ -96,12 +96,23 @@ module.exports = function NameChanger(dispatch) {
 	
 	dispatch.hook('S_SPAWN_USER', 3, event => {
 		AddCharacters(event.name);
-		//console.log(event.name)
 			if(enabled && newNames){
 				event.name = newNames;
 				newNames = '';
 				return true;
 			}
+		return
+	});
+	
+	dispatch.hook('S_PARTY_MEMBER_LIST', 5, event => {
+		for(let i in event.members){
+			AddCharacters(event.members[i].name);
+				if(enabled && newNames){
+					event.members[i].name = newNames;
+					newNames = '';
+					return true;
+				}
+		}
 		return
 	});
 	
