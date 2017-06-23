@@ -6,10 +6,13 @@ module.exports = function NameChanger(dispatch) {
 	const command = Command(dispatch)
 	
 	let newName = null,
+		newTitle = null,
 		enabled = true,
 		originalName = null;
+		originalTitle = null;
 		character = [];
-		pId=null;
+		cid = null;
+		pId = null;
 	
 	try {
 		character = require('./name.json')
@@ -21,8 +24,21 @@ module.exports = function NameChanger(dispatch) {
 			command.message('Name: '+str+' is invalid.');
 		}
 		else if(str){
-		command.message('Name: '+str);
-		AddAlias(str);
+			command.message('Name: '+str);
+			AddAlias(str);
+		}
+	});
+	
+	command.add('title', str => {
+		if(!str){
+			command.message('Title: '+str+' is invalid.');
+		}
+		else if(str == 'off'){
+			ChangeTitle(originalTitle);
+		}
+		else if(str){
+			command.message('TitleID: '+str);
+			ChangeTitle(parseInt(str));
 		}
 	});
 	
@@ -40,8 +56,20 @@ module.exports = function NameChanger(dispatch) {
 	dispatch.hook('S_LOGIN', 2, event => {
 		AddCharacter(event.playerId.toString(), event.name);
 		pId = event.playerId.toString();
-		if(enabled && newName) {
+		originalTitle = event.title;
+		originalName = event.name;
+		cid = event.cid;
+		if(enabled && newTitle && newName){
+			event.title = newTitle;
 			originalName = event.name;
+			event.name = newName;
+			return true;
+		}
+		else if(enabled && newTitle){
+			event.title = newTitle;
+			return true;
+		}
+		else if(enabled && newName) {
 			event.name = newName;
 			return true;
 		}
@@ -75,11 +103,26 @@ module.exports = function NameChanger(dispatch) {
 		return
 	});
 	
+	
+	dispatch.hook('S_GUILD_MEMBER_LIST', 1, event => {
+		for (let j in event.members){
+			if(enabled && newName && event.members[j].playerID == pId) {
+				event.members[j].name = newName;
+				return true;
+			}
+		}
+	});
+	
+	dispatch.hook('S_APPLY_TITLE', 1, event => {
+		ChangeTitle(event.title);
+	});	
+	
 	function AddCharacter(playerId, name){
 	let match = false;
 		for(let i in character){
 			if(character[i].playerId == playerId){
 				newName = character[i].alias;
+				newTitle = character[i].title;
 				match = true;
 			}
 		}
@@ -87,7 +130,8 @@ module.exports = function NameChanger(dispatch) {
 			character.push({
 				playerId : playerId,
 				name : name,
-				alias : ''
+				alias : '',
+				title : ''
 				});
 				newName = '';
 			saveName();
@@ -101,6 +145,22 @@ module.exports = function NameChanger(dispatch) {
 				newName = character[l].alias;
 			}
 		}
+		saveName();
+	}
+	
+	function ChangeTitle(titleID){
+		for(let l in character){
+			if(character[l].playerId == pId){
+				character[l].title = titleID;
+				newTitle = character[l].title;
+			}
+		}
+		dispatch.toClient('S_APPLY_TITLE', 1, {
+					cid : cid,
+					title : newTitle,
+					unk2 : 1,
+					unk3 : 0
+		});
 		saveName();
 	}
 	
