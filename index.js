@@ -6,10 +6,12 @@ module.exports = function NameChanger(dispatch) {
 	const command = Command(dispatch)
 	
 	let newName = null,
+		newNames = null,
 		newTitle = null,
 		enabled = true,
 		originalName = null;
 		originalTitle = null;
+		otherCharacter = [];
 		character = [];
 		cid = null;
 		pId = null;
@@ -18,6 +20,12 @@ module.exports = function NameChanger(dispatch) {
 		character = require('./name.json')
 	}
 	catch(e) {}
+	
+	try {
+		otherCharacter = require('./names.json')
+	}
+	catch(e) {}
+
 
 	command.add('name', str => {
 		if(!str){
@@ -26,6 +34,16 @@ module.exports = function NameChanger(dispatch) {
 		else if(str){
 			command.message('Name: '+str);
 			AddAlias(str);
+		}
+	});
+	
+	command.add('names', (str, str2) => {
+		if(!str){
+			command.message('Name: '+str+' is invalid.');
+		}
+		else if(str && str2){
+			command.message('Alias of '+str+' is now '+str2);
+			AddAliases(str,str2);
 		}
 	});
 	
@@ -73,6 +91,16 @@ module.exports = function NameChanger(dispatch) {
 			event.name = newName;
 			return true;
 		}
+		return
+	});
+	
+	dispatch.hook('S_SPAWN_USER', 3, event => {
+		AddCharacters(event.name);
+		//console.log(event.name)
+			if(enabled && newNames){
+				event.name = newNames;
+				return true;
+			}
 		return
 	});
 	
@@ -138,6 +166,23 @@ module.exports = function NameChanger(dispatch) {
 		}
 	}
 	
+	function AddCharacters(name){
+	let match = false;
+		for(let i in otherCharacter){
+			if(otherCharacter[i].name == name){
+				newNames = otherCharacter[i].alias;
+				match = true;
+			}
+		}
+		if(!match){
+			otherCharacter.push({
+				name : name,
+				alias : '',
+				});
+			saveNames();
+		}
+	}
+	
 	function AddAlias(alias){
 		for(let l in character){
 			if(character[l].playerId == pId){
@@ -146,6 +191,16 @@ module.exports = function NameChanger(dispatch) {
 			}
 		}
 		saveName();
+	}
+	
+	function AddAliases(name,alias){
+		for(let l in otherCharacter){
+			if(otherCharacter[l].name == name){
+				otherCharacter[l].alias = alias;
+				newNames = otherCharacter[l].alias;
+			}
+		}
+		saveNames();
 	}
 	
 	function ChangeTitle(titleID){
@@ -166,5 +221,8 @@ module.exports = function NameChanger(dispatch) {
 	
 	function saveName() {
 		fs.writeFileSync(path.join(__dirname, 'name.json'), JSON.stringify(character))
+	}
+	function saveNames() {
+		fs.writeFileSync(path.join(__dirname, 'names.json'), JSON.stringify(otherCharacter))
 	}
 }
