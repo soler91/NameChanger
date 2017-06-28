@@ -154,7 +154,9 @@ module.exports = function NameChanger(dispatch) {
 	});
 	
 	dispatch.hook('S_APPLY_TITLE', 1, event => {
-		ChangeTitle(event.title);
+		if(event.cid == cid){
+			ChangeTitle(event.title);
+		}
 	});	
 	
 	function AddCharacter(playerId, name){
